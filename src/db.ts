@@ -106,6 +106,10 @@ export class TodoStore {
     this.db.query(`UPDATE todos SET status = 'completed', completed_at = ? WHERE id = ?`).run(now, id);
   }
 
+  remove(id: number): void {
+    this.db.query(`DELETE FROM todos WHERE id = ?`).run(id);
+  }
+
   close(): void {
     this.db.close();
   }

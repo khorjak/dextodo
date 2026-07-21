@@ -22,6 +22,7 @@ bun start
 | `Enter`  | Modify the selected todo (title and/or due date)   |
 | `s`      | Mark the selected Active todo as started            |
 | `c`      | Mark the selected Active todo as completed          |
+| `d`      | Delete the selected Completed todo                  |
 | `q`      | Quit                                                |
 
 Due dates use `YYYY-MM-DD`. Leaving the due-date prompt blank means no date.

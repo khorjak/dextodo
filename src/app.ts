@@ -45,7 +45,7 @@ export class App {
       attributes: TextAttributes.BOLD,
     });
     this.hotkeysText = new TextRenderable(renderer, {
-      content: "a Add  Enter Modify  s Start  c Complete  Tab Switch  q Quit ",
+      content: "a Add  Enter Modify  s Start  c Complete  d Delete  Tab Switch  q Quit ",
       fg: "#11111b",
     });
     const titleBar = new BoxRenderable(renderer, {
@@ -273,6 +273,26 @@ export class App {
     this.flash(`Completed "${todo.title}"`);
   }
 
+  private async deleteTodo(): Promise<void> {
+    if (this.currentList() !== this.completedList) return;
+    const option = this.completedList.getSelectedOption();
+    if (!option) return;
+    const todo = this.store.get(option.value as number);
+    if (!todo) return;
+
+    this.blurCurrent();
+    const answer = await this.promptBar.ask(`Delete "${todo.title}"? (y/N)`);
+    this.focusCurrent();
+    if (answer === null || answer.trim().toLowerCase() !== "y") {
+      this.flash("Delete cancelled");
+      return;
+    }
+
+    this.store.remove(todo.id);
+    this.refresh();
+    this.flash(`Deleted "${todo.title}"`);
+  }
+
   private quit(): void {
     this.store.close();
     this.renderer.destroy();
@@ -307,6 +327,10 @@ export class App {
         return;
       case "c":
         this.markCompleted();
+        key.preventDefault();
+        return;
+      case "d":
+        this.deleteTodo();
         key.preventDefault();
         return;
       case "q":

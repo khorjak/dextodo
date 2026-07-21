@@ -31,7 +31,7 @@ Update `README.md` (user-facing usage/keybindings) and this file (architecture/d
 Everything lives flat in `src/`, one file per concern:
 
 - `index.ts` — entry point: opens the `TodoStore` (SQLite), creates the renderer, constructs `App`.
-- `db.ts` — `TodoStore`: all SQLite access (`bun:sqlite`). Owns schema creation and every query (`listActive`, `listCompleted`, `add`, `update`, `markStarted`, `markCompleted`). No other file touches the database directly.
+- `db.ts` — `TodoStore`: all SQLite access (`bun:sqlite`). Owns schema creation and every query (`listActive`, `listCompleted`, `add`, `update`, `markStarted`, `markCompleted`, `remove`). No other file touches the database directly.
 - `app.ts` — the whole UI. Two `SelectRenderable` lists (Active / Completed) inside bordered `BoxRenderable`s, a shared `PromptBar` for text input, and all key routing.
 - `promptBar.ts` — one-shot bottom bar (label + input), resolves a `Promise<string | null>` on Enter/Escape. Reused sequentially for every text prompt (add title, add due date, edit title, edit due date) rather than having a bespoke modal per field.
 - `dateUtil.ts` — strict `YYYY-MM-DD` parsing (`parseDate`, rejects overflow dates like `2026-02-30` that `Date` would otherwise silently roll forward) and stamp formatting.
@@ -39,7 +39,7 @@ Everything lives flat in `src/`, one file per concern:
 
 ### Data model
 
-`todos` table: `id`, `title`, `due_date` (nullable, optional target date set at creation or edit), `status` (`pending` | `started` | `completed`), `started_at`, `completed_at`, `created_at`. The **Active** section is every row with `status != 'completed'` (both `pending` and `started`); the **Completed** section is `status = 'completed'`. There is no "reopen" path back to Active — matches the spec (add / modify / mark started / mark completed only).
+`todos` table: `id`, `title`, `due_date` (nullable, optional target date set at creation or edit), `status` (`pending` | `started` | `completed`), `started_at`, `completed_at`, `created_at`. The **Active** section is every row with `status != 'completed'` (both `pending` and `started`); the **Completed** section is `status = 'completed'`. There is no "reopen" path back to Active — the only exit from Completed is a permanent `remove` (delete), not a status change.
 
 Database file defaults to `~/.dextodo/todos.sqlite` (see `TodoStore.defaultPath()`) so the todo list is a single global list, not per-directory — pass a path to the `TodoStore` constructor to override (used by tests/tooling).
 
@@ -47,11 +47,12 @@ Database file defaults to `~/.dextodo/todos.sqlite` (see `TodoStore.defaultPath(
 
 `App` registers one listener, `renderer.keyInput.on("keypress", ...)`, same pattern as dexEdit: it must run its own dispatch (overlay-gated early returns) since OpenTUI runs plain `.on()` listeners before the focused renderable's `handleKeyPress`, and `key.preventDefault()` stops the event from reaching the focused widget.
 
-- `Tab` cycles focus between the Active and Completed `SelectRenderable`s (only `Active`'s selection is a valid target for `s`/`c`).
+- `Tab` cycles focus between the Active and Completed `SelectRenderable`s (only `Active`'s selection is a valid target for `s`/`c`; only `Completed`'s selection is a valid target for `d`).
 - `a` → add flow (title prompt, then optional due-date prompt; canceling the title aborts, canceling the date just skips it).
 - Selecting an item (`Enter`, via `SelectRenderableEvents.ITEM_SELECTED`) → modify flow, prefilled with current title/due date.
 - `s` marks the selected Active item started (no-op unless it's currently `pending`).
 - `c` marks the selected Active item completed.
+- `d` → delete flow for the selected Completed item (no-op unless focus is on Completed): prompts `Delete "title"? (y/N)` via the shared `PromptBar` (any answer other than `y`/`Y`, including cancel, aborts). No "undo" path once confirmed — matches the spec's add / modify / mark started / mark completed / delete-completed scope.
 - `q` quits.
 
 ### Reading OpenTUI's API

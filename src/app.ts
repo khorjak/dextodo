@@ -10,7 +10,7 @@ import {
 } from "@opentui/core";
 import { TodoStore } from "./db";
 import { PromptBar } from "./promptBar";
-import { parseDate, formatStamp } from "./dateUtil";
+import { parseDate, formatStamp, todayStamp } from "./dateUtil";
 import type { Todo } from "./types";
 
 export class App {
@@ -197,7 +197,7 @@ export class App {
       return;
     }
 
-    const dueInput = await this.promptBar.ask("Due date (YYYY-MM-DD, optional):");
+    const dueInput = await this.promptBar.ask("Due date (YYYY-MM-DD, optional):", todayStamp());
     this.focusCurrent();
 
     let dueDate: string | null = null;
@@ -208,7 +208,12 @@ export class App {
       }
     }
 
-    this.store.add(title.trim(), dueDate);
+    try {
+      this.store.add(title.trim(), dueDate);
+    } catch (err) {
+      this.flash(`Failed to add todo: ${errorMessage(err)}`);
+      return;
+    }
     this.refresh();
     this.flash(`Added "${title.trim()}"`);
   }
@@ -246,7 +251,12 @@ export class App {
       }
     }
 
-    this.store.update(id, fields);
+    try {
+      this.store.update(id, fields);
+    } catch (err) {
+      this.flash(`Failed to update todo: ${errorMessage(err)}`);
+      return;
+    }
     this.refresh();
     this.flash(`Updated "${title.trim()}"`);
   }
@@ -288,7 +298,12 @@ export class App {
       return;
     }
 
-    this.store.remove(todo.id);
+    try {
+      this.store.remove(todo.id);
+    } catch (err) {
+      this.flash(`Failed to delete todo: ${errorMessage(err)}`);
+      return;
+    }
     this.refresh();
     this.flash(`Deleted "${todo.title}"`);
   }
@@ -353,4 +368,8 @@ function describeCompleted(todo: Todo): string {
   if (todo.completedAt) parts.push(`completed ${formatStamp(todo.completedAt)}`);
   if (todo.dueDate) parts.push(`due ${todo.dueDate}`);
   return parts.join(" · ");
+}
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
 }

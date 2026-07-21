@@ -32,21 +32,28 @@ export class TodoStore {
   constructor(dbPath?: string) {
     const path = dbPath ?? TodoStore.defaultPath();
     const dir = join(path, "..");
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 
-    this.db = new Database(path, { create: true });
-    this.db.run("PRAGMA journal_mode = WAL;");
-    this.db.run(`
-      CREATE TABLE IF NOT EXISTS todos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        due_date TEXT,
-        status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'started', 'completed')),
-        started_at TEXT,
-        completed_at TEXT,
-        created_at TEXT NOT NULL
-      );
-    `);
+    try {
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+
+      this.db = new Database(path, { create: true });
+      this.db.run("PRAGMA journal_mode = WAL;");
+      this.db.run(`
+        CREATE TABLE IF NOT EXISTS todos (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          due_date TEXT,
+          status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'started', 'completed')),
+          started_at TEXT,
+          completed_at TEXT,
+          created_at TEXT NOT NULL
+        );
+      `);
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      console.error(`dexTodo: could not open database at ${path}: ${reason}`);
+      process.exit(1);
+    }
   }
 
   static defaultPath(): string {

@@ -25,7 +25,7 @@ bun start
 | `d`      | Delete the selected Completed todo                  |
 | `q`      | Quit                                                |
 
-Due dates use `YYYY-MM-DD`. Leaving the due-date prompt blank means no date.
+Due dates use `YYYY-MM-DD`. The add flow prefills the due-date prompt with today's date — clear it and press Enter for no date. The edit flow prefills with the todo's current due date (or blank if it has none).
 
 ## Sections
 

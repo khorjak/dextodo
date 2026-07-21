@@ -48,7 +48,7 @@ Database file defaults to `~/.dextodo/todos.sqlite` (see `TodoStore.defaultPath(
 `App` registers one listener, `renderer.keyInput.on("keypress", ...)`, same pattern as dexEdit: it must run its own dispatch (overlay-gated early returns) since OpenTUI runs plain `.on()` listeners before the focused renderable's `handleKeyPress`, and `key.preventDefault()` stops the event from reaching the focused widget.
 
 - `Tab` cycles focus between the Active and Completed `SelectRenderable`s (only `Active`'s selection is a valid target for `s`/`c`; only `Completed`'s selection is a valid target for `d`).
-- `a` → add flow (title prompt, then optional due-date prompt; canceling the title aborts, canceling the date just skips it).
+- `a` → add flow (title prompt, then due-date prompt prefilled with `todayStamp()`; canceling the title aborts, canceling the date just skips it, clearing the prefill before Enter means no due date).
 - Selecting an item (`Enter`, via `SelectRenderableEvents.ITEM_SELECTED`) → modify flow, prefilled with current title/due date.
 - `s` marks the selected Active item started (no-op unless it's currently `pending`).
 - `c` marks the selected Active item completed.

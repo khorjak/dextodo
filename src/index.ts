@@ -1,20 +1,7 @@
-import {
-  ASCIIFont,
-  Box,
-  createCliRenderer,
-  Text,
-  TextAttributes,
-} from "@opentui/core";
+import { createCliRenderer } from "@opentui/core";
+import { App } from "./app";
+import { TodoStore } from "./db";
 
-const renderer = await createCliRenderer({ exitOnCtrlC: true });
-
-renderer.root.add(
-  Box(
-    { alignItems: "center", justifyContent: "center", flexGrow: 1 },
-    Box(
-      { justifyContent: "center", alignItems: "flex-end" },
-      ASCIIFont({ font: "tiny", text: "OpenTUI" }),
-      Text({ content: "What will you build?", attributes: TextAttributes.DIM }),
-    ),
-  ),
-);
+const store = new TodoStore();
+const renderer = await createCliRenderer({});
+new App(renderer, store);

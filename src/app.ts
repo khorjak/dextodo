@@ -29,6 +29,10 @@ export class App {
   private focusIdx = 0;
   private statusTimer: ReturnType<typeof setTimeout> | null = null;
 
+  private static readonly PAGE_SIZE = 10;
+  private activePage = 0;
+  private completedPage = 0;
+
   constructor(renderer: CliRenderer, store: TodoStore) {
     this.renderer = renderer;
     this.store = store;
@@ -45,7 +49,7 @@ export class App {
       attributes: TextAttributes.BOLD,
     });
     this.hotkeysText = new TextRenderable(renderer, {
-      content: "a Add  Enter Modify  s Start  c Complete  d Delete  Tab Switch  q Quit ",
+      content: "a Add  Enter Modify  s Start  c Complete  d Delete  PgUp/PgDn Page  Tab Switch  q Quit ",
       fg: "#11111b",
     });
     const titleBar = new BoxRenderable(renderer, {
@@ -168,13 +172,31 @@ export class App {
     }, 2500);
   }
 
+  private paginate<T>(items: T[], page: number): { slice: T[]; page: number; totalPages: number; total: number } {
+    const total = items.length;
+    const totalPages = Math.max(1, Math.ceil(total / App.PAGE_SIZE));
+    const clampedPage = Math.min(Math.max(page, 0), totalPages - 1);
+    const start = clampedPage * App.PAGE_SIZE;
+    return { slice: items.slice(start, start + App.PAGE_SIZE), page: clampedPage, totalPages, total };
+  }
+
+  private paginatedTitle(label: string, pag: { page: number; totalPages: number; total: number }): string {
+    const pageInfo = pag.totalPages > 1 ? ` — page ${pag.page + 1}/${pag.totalPages}` : "";
+    return `${label} (${pag.total})${pageInfo}`;
+  }
+
   private refresh(): void {
-    const activeOptions: SelectOption[] = this.store.listActive().map((todo) => ({
+    const active = this.paginate(this.store.listActive(), this.activePage);
+    this.activePage = active.page;
+    const completed = this.paginate(this.store.listCompleted(), this.completedPage);
+    this.completedPage = completed.page;
+
+    const activeOptions: SelectOption[] = active.slice.map((todo) => ({
       name: `${todo.status === "started" ? "[~]" : "[ ]"} ${todo.title}`,
       description: describeActive(todo),
       value: todo.id,
     }));
-    const completedOptions: SelectOption[] = this.store.listCompleted().map((todo) => ({
+    const completedOptions: SelectOption[] = completed.slice.map((todo) => ({
       name: `[x] ${todo.title}`,
       description: describeCompleted(todo),
       value: todo.id,
@@ -182,8 +204,21 @@ export class App {
 
     this.activeList.options = activeOptions;
     this.completedList.options = completedOptions;
-    this.activeBox.title = `Active (${activeOptions.length})`;
-    this.completedBox.title = `Completed (${completedOptions.length})`;
+    this.activeBox.title = this.paginatedTitle("Active", active);
+    this.completedBox.title = this.paginatedTitle("Completed", completed);
+  }
+
+  private changePage(delta: number): void {
+    const isActive = this.currentList() === this.activeList;
+    const total = isActive ? this.store.listActive().length : this.store.listCompleted().length;
+    const totalPages = Math.max(1, Math.ceil(total / App.PAGE_SIZE));
+    if (isActive) {
+      this.activePage = Math.min(Math.max(this.activePage + delta, 0), totalPages - 1);
+    } else {
+      this.completedPage = Math.min(Math.max(this.completedPage + delta, 0), totalPages - 1);
+    }
+    this.refresh();
+    this.currentList().setSelectedIndex(0);
   }
 
   // ---- commands ----
@@ -346,6 +381,14 @@ export class App {
         return;
       case "d":
         this.deleteTodo();
+        key.preventDefault();
+        return;
+      case "pageup":
+        this.changePage(-1);
+        key.preventDefault();
+        return;
+      case "pagedown":
+        this.changePage(1);
         key.preventDefault();
         return;
       case "q":

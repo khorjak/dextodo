@@ -23,6 +23,7 @@ bun start
 | `s`      | Mark the selected Active todo as started            |
 | `c`      | Mark the selected Active todo as completed          |
 | `d`      | Delete the selected Completed todo                  |
+| `PgUp` / `PgDn` | Previous/next page of the focused section (10 per page) |
 | `q`      | Quit                                                |
 
 Due dates use `YYYY-MM-DD`. The add flow prefills the due-date prompt with today's date — clear it and press Enter for no date. The edit flow prefills with the todo's current due date (or blank if it has none).
@@ -31,6 +32,8 @@ Due dates use `YYYY-MM-DD`. The add flow prefills the due-date prompt with today
 
 - **Active** — todos not yet completed (pending or started), sorted by due date.
 - **Completed** — todos marked completed, most recently completed first.
+
+Each section shows 10 todos per page. When a section has more than 10, its border title shows `— page X/Y`; `PgUp`/`PgDn` page the currently focused section (`Tab` to switch focus first).
 
 ## Build a standalone binary
 

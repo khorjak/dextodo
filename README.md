@@ -1,5 +1,8 @@
 # dexTodo
 
+[![GitHub repo](https://img.shields.io/badge/GitHub-khorjak%2Fdextodo-blue?logo=github)](https://github.com/khorjak/dextodo)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Terminal todo list built on [OpenTUI](https://github.com/sst/opentui), run with [Bun](https://bun.sh). Data is stored in a local SQLite database at `~/.dextodo/todos.sqlite`.
 
 ## Install & run
